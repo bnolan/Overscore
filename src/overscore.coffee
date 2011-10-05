@@ -18,20 +18,21 @@ class Overscore
 
     if @operation == null
       if @operations.length > 0
-        @operation = @operations.pop()
+        @operation = @operations.shift()
         @input = for input in @output
           input
         @output = []
-        while ((new Date).getTime() - tzero < @utilisation) and (@input.length > 0)
-          input = @input.pop()
-          # console.log input.slice(0,100)
-          @operation(input, @output)
-      
-        if @input.length == 0
-          @operation = null
-
       else
         @_finally()
+
+    if @operation
+      while ((new Date).getTime() - tzero < @utilisation) and (@input.length > 0)
+        input = @input.pop()
+        @operation(input)
+    
+      if @input.length == 0
+        @operation = null
+
       
   _finally: ->
     clearInterval(@interval)
@@ -40,13 +41,19 @@ class Overscore
       @_finalCallback(@output)
     
   map: (func) ->
-    @operations.push( (input, output) =>
+    @operations.push( (input) =>
       @output.push(func(input))
     )
     this
     
+  each: (func) ->
+    @operations.push( (input) =>
+      func(input)
+    )
+    this
+
   select: (func) ->
-    @operations.push( (input, output) =>
+    @operations.push( (input) =>
       if func(input)
         @output.push(input)
     )
@@ -56,8 +63,7 @@ class Overscore
     @_finalCallback = func
     this
 
-@Overscore = Overscore  
-
+@Overscore = Overscore
+# 
 # window.$O = (array) ->
 #   new Overscore array
-# 
